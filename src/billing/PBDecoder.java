@@ -444,7 +444,12 @@ class PBDecoder {
     }
 
     public static String pbTypeToString(int type) {
-        return FieldType.values()[type].name();
+        try{
+            return FieldType.values()[type].name();
+        }catch (Exception e){
+            return "UnknowType"+type;
+        }
+
     }
 
     public static String dumpProtoBuffNew(String info, Object[] argObjects) {
@@ -706,7 +711,7 @@ class PBDecoder {
                 presenceFieldOffset = (int) 0;
                 presenceMaskShift = 0;
             } else {
-                String field = (String) messageInfoObjects[objectsPosition++];
+                String field = objectsPosition<messageInfoObjects.length? (String) messageInfoObjects[objectsPosition++] : "Unknow";
                 if (fieldType == 9 /* FieldType.MESSAGE */ || fieldType == 17 /* FieldType.GROUP */) {
                     objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = field;
                 } else if (fieldType == 27 /* FieldType.MESSAGE_LIST */
