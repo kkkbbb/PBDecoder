@@ -10,20 +10,24 @@ System.setProperty("python.security.respectJavaAccessibility", "false")
 from com.wwb.proto import PBMain
 
 dexUnit = None
+parsedClass = []
 
 class test(IScript):
     def run(self, ctx):
-        global dexUnit
+        global dexUnit,parsedClass
         prj = ctx.getMainProject()
         dexUnit = prj.findUnit(IDexUnit)
+        parsedClass = []
 
         className = ctx.displayForm("proto class","the class of protobuf",
                                     FormEntry.Text('className', '', FormEntry.INLINE, None, 0, 0))[0]
         protoresult = self.parseCls(dexUnit.getClass("L"+className+";"));
-        ctx.displayText("proto", protoresult,False)
+        ctx.displayText("proto", protoresult,True)
 
     def parseCls(self,cls):
+        parsedClass.append(cls.getName())
         currentproto = self.parseProto(cls)
+        #print currentproto
 
         cresultstr = "message " + cls.getName() + " {\n"
         subresult = ""
@@ -36,6 +40,7 @@ class test(IScript):
                     if clsField.getName() == field[2]:
                         mtype = clsField.getFieldType()
                         cresultstr += "\t" + fields.replace("message",mtype.getName()) + "\n"
+                        if mtype.getName() in parsedClass: continue
                         subresult += self.parseCls(mtype.getImplementingClass())
                 continue
 
@@ -43,7 +48,9 @@ class test(IScript):
 
             if not self.isBaseType(mfieldType):
                 #print mfieldType
-                subresult += self.parseCls(dexUnit.getClass("L"+mfieldType.strip()+";"))
+                mfieldType = mfieldType.strip()
+                if mfieldType in parsedClass: continue
+                subresult += self.parseCls(dexUnit.getClass("L"+mfieldType+";"))
 
         return cresultstr+"}\n\n"+subresult
 
@@ -81,7 +88,7 @@ class test(IScript):
                     objs+= dexUnit.getType(ins.getParameters()[1].getValue()).getName()+","
                     continue
                 if ins.getMnemonic() == "sget-object":
-                    objs+="enum,"
+                    objs+="enum.type,"
                     continue
                 if "filled-new-array" in ins.getMnemonic() or "invoke-static" == ins.getMnemonic():
                     break
