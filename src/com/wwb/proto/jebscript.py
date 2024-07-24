@@ -32,7 +32,10 @@ class test(IScript):
         cresultstr = "message " + cls.getName() + " {\n"
         subresult = ""
         for fields in currentproto.split("\n"):
-            if not len(fields) > 1 or "{" in fields or "}" in fields: continue
+            if not len(fields) > 0: continue
+            if "{" in fields or "}" in fields:
+                cresultstr +="\t"+fields+"\n"
+                continue
             field = fields.split("=")[0].split(" ")
             mfieldType =field[1] if not "oneof" in field[1] else field[0]
             if mfieldType == "message":
