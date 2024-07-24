@@ -2,6 +2,9 @@
   <artifact type="jar" name="PBDecoder:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/PBDecoder_jar</output-path>
     <root id="archive" name="PBDecoder.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$APPLICATION_HOME_DIR$/jbr/bin/META-INF/MANIFEST.MF" />
+      </element>
       <element id="module-output" name="PBDecoder" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-text-1.10.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-lang3-3.12.0.jar" path-in-jar="/" />

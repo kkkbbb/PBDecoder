@@ -1,5 +1,11 @@
-package billing;
+package com.wwb.proto;
 
+import org.apache.commons.text.StringEscapeUtils;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -7,18 +13,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import static billing.PBDecoder.FieldType.objs;
-import static javax.swing.JColorChooser.showDialog;
+import java.util.*;
 //import org.apache.commons.lang3.StringEscapeUtils;
 
 class PBDecoder {
@@ -452,38 +448,52 @@ class PBDecoder {
 
     }
 
-    public static String dumpProtoBuffNew(String info, Object[] argObjects) {
-        final boolean isProto3 = getSyntax(info) == 3;
+    public class messageInfo {
+        private final String info;
+        private int currentPos;
+
+        public messageInfo(String info){
+            this.info = info;
+            this.currentPos = 0;
+        }
+
+        public int getNext(){
+            int result = info.charAt(currentPos++);
+            if (result >= 0xE000) {
+                int c1 = result;
+                int c2;
+                int c3;
+                if ((c2 = info.charAt(currentPos++)) >= 0xE000 && (c3 = info.charAt(currentPos++)) < 0xd7ff) {
+                    return (c3 << 26) | ((c2 & 0x1FFF) << 13) | (c1 & 0x1FFF);
+                }
+                result = (c2 << 13) | (c1 & 0x1FFF);
+            }
+            return result;
+        }
+
+        public int getCurrentPos(){
+            return this.currentPos;
+        }
+    }
+
+    public String dumpProtoBuffNew(String info, String[] argObjects) {
+        System.out.println(info);
+        for(String item : argObjects){
+            System.out.print(item+",");
+        }
+        System.out.print("\n");
+        info = StringEscapeUtils.unescapeJava(info);
+        final int length = info.length();
+//        int i = 0;
+
+        messageInfo msgs = new messageInfo(info);
+        final int flags = msgs.getNext();
+        final boolean isProto3 = (flags & 1) == 0;
         StringBuilder dumpstr = new StringBuilder();
 
         dumpstr.append("\nisProto3: " + isProto3);
-        final int length = info.length();
-        int i = 0;
 
-        int next = info.charAt(i++);
-        if (next >= 0xD800) {
-            int result = next & 0x1FFF;
-            int shift = 13;
-            while ((next = info.charAt(i++)) >= 0xD800) {
-                result |= (next & 0x1FFF) << shift;
-                shift += 13;
-            }
-            next = result | (next << shift);
-        }
-        final int unusedFlags = next;
-
-        next = info.charAt(i++);
-        if (next >= 0xD800) {
-            int result = next & 0x1FFF;
-            int shift = 13;
-            while ((next = info.charAt(i++)) >= 0xD800) {
-                result |= (next & 0x1FFF) << shift;
-                shift += 13;
-            }
-            next = result | (next << shift);
-        }
-        final int fieldCount = next;
-
+        final int fieldCount = msgs.getNext();
         final int oneofCount;
         final int hasBitsCount;
         final int minFieldNumber;
@@ -506,108 +516,21 @@ class PBDecoder {
             intArray = EMPTY_INT_ARRAY;
             objectsPosition = 0;
         } else {
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            oneofCount = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            hasBitsCount = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            minFieldNumber = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            maxFieldNumber = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            numEntries = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            mapFieldCount = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            repeatedFieldCount = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            checkInitialized = next;
+            oneofCount = msgs.getNext();
+            hasBitsCount = msgs.getNext();
+            minFieldNumber = msgs.getNext();
+            maxFieldNumber = msgs.getNext();
+            numEntries = msgs.getNext();
+            mapFieldCount = msgs.getNext();
+            repeatedFieldCount = msgs.getNext();
+            checkInitialized = msgs.getNext();
             intArray = new int[checkInitialized + mapFieldCount + repeatedFieldCount];
             // Field objects are after a list of (oneof, oneofCase) pairs + a list of
             // hasbits fields.
             objectsPosition = oneofCount * 2 + hasBitsCount;
         }
 
-        final Object[] messageInfoObjects = argObjects;
+        final String[] messageInfoObjects = argObjects;
         int checkInitializedPosition = 0;
         int[] buffer = new int[numEntries * INTS_PER_FIELD];
         Object[] objects = new Object[numEntries * 2];
@@ -616,36 +539,14 @@ class PBDecoder {
         int repeatedFieldIndex = checkInitialized + mapFieldCount;
 
         int bufferIndex = 0;
-        while (i < length) {
+        while (msgs.getCurrentPos() < length) {
             final int fieldNumber;
             final int fieldTypeWithExtraBits;
             final int fieldType;
+            fieldNumber = msgs.getNext();
+            fieldTypeWithExtraBits = msgs.getNext();
 
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            fieldNumber = next;
-
-            next = info.charAt(i++);
-            if (next >= 0xD800) {
-                int result = next & 0x1FFF;
-                int shift = 13;
-                while ((next = info.charAt(i++)) >= 0xD800) {
-                    result |= (next & 0x1FFF) << shift;
-                    shift += 13;
-                }
-                next = result | (next << shift);
-            }
-            fieldTypeWithExtraBits = next;
             fieldType = fieldTypeWithExtraBits & 0xFF;
-
             if ((fieldTypeWithExtraBits & 0x400) != 0) {
                 intArray[checkInitializedPosition++] = bufferIndex;
             }
@@ -656,17 +557,7 @@ class PBDecoder {
 
             // Oneof
             if (fieldType >= ONEOF_TYPE_OFFSET) {
-                next = info.charAt(i++);
-                if (next >= 0xD800) {
-                    int result = next & 0x1FFF;
-                    int shift = 13;
-                    while ((next = info.charAt(i++)) >= 0xD800) {
-                        result |= (next & 0x1FFF) << shift;
-                        shift += 13;
-                    }
-                    next = result | (next << shift);
-                }
-                int oneofIndex = next;
+                int oneofIndex = msgs.getNext();
 
                 final int oneofFieldType = fieldType - ONEOF_TYPE_OFFSET;
                 if (oneofFieldType == 9 /* FieldType.MESSAGE */
@@ -721,7 +612,9 @@ class PBDecoder {
                         || fieldType == 30 /* FieldType.ENUM_LIST */
                         || fieldType == 44 /* FieldType.ENUM_LIST_PACKED */) {
                     if (!isProto3) {
-                        objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
+                        if(messageInfoObjects[objectsPosition].contains(".")){
+                            objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
+                        }
                     }
                 } else if (fieldType == 50 /* FieldType.MAP */) {
                     intArray[mapFieldIndex++] = bufferIndex;
@@ -733,20 +626,10 @@ class PBDecoder {
 
                 fieldOffset = (int) 0;
                 String hasBitsField = "";
+                int hasBitsIndex=-1;
                 boolean hasHasBit = (fieldTypeWithExtraBits & 0x1000) == 0x1000;
+                if(hasHasBit) { hasBitsIndex = msgs.getNext();}
                 if (hasHasBit && fieldType <= 17 /* FieldType.GROUP */) {
-                    next = info.charAt(i++);
-                    if (next >= 0xD800) {
-                        int result = next & 0x1FFF;
-                        int shift = 13;
-                        while ((next = info.charAt(i++)) >= 0xD800) {
-                            result |= (next & 0x1FFF) << shift;
-                            shift += 13;
-                        }
-                        next = result | (next << shift);
-                    }
-                    int hasBitsIndex = next;
-
                     int index = oneofCount * 2 + hasBitsIndex / 32;
                     Object o = messageInfoObjects[index];
                     if (o instanceof java.lang.reflect.Field) {
@@ -765,7 +648,7 @@ class PBDecoder {
 
                 dumpstr.append("\n"+
                         "{Field fieldType=" + pbTypeToString(fieldType) + ", field=" + field + ", hasBitsField="
-                                + hasBitsField + ", fieldNumber= " + fieldNumber + "}");
+                                + hasBitsField + ", fieldNumber= " + fieldNumber + ", hasBitsIndx=" + (hasHasBit?1 << hasBitsIndex:hasBitsIndex) + "}");
                 if (fieldType >= 18 && fieldType <= 49) {
                     // Field types of repeated fields are in a consecutive range from 18
                     // (DOUBLE_LIST) to
@@ -838,174 +721,193 @@ class PBDecoder {
         return content.toString();
     }
 
-    public static void main(String[] args) {
-        showDialog();
-//        if (args.length < 2) {
-//            System.out.println("Usage: java PBDecoder <message info file> <message objects file>");
-//            return;
-//        }
-//        String strInfo = StringEscapeUtils.unescapeJava(args[0]);
-//        String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
-//        String objstr = String.join(" ", subArgs);
-        
 
+
+    public static String ToProto(String parseStr,String objstr) {
+        String[] s = parseStr.split("\n");
+        String[] fieldStr = new String[5];
+        StringBuilder protostr = new StringBuilder();
+        Map<String,StringBuilder> oneofProtoStr = new HashMap<>();
+        StringBuilder outproto = new StringBuilder();
+        TreeMap<Integer,String> linemap = new TreeMap<>();
+        Map<String,Integer> oneofFieldNum = new HashMap<>();
+
+//                int nohasbitNum = 99;
+        for(String line : s){
+            protostr.setLength(0);
+            if(line.contains("oneOfField")) line = line.replace("{oneOfField",""); else line = line.replace("{Field","");
+            line = line.replace("}","");
+            for (int i = 0; i < fieldStr.length; i++) fieldStr[i] = null;
+
+            if(line.contains("oneofField")) {
+                for(String fields : line.split(",")){
+                    String[] field = fields.split("=");
+                    if(field.length < 2){
+                        continue;
+                    }
+                    field[1] = field[1].trim();
+                    switch (field[0].replace(" ","")){
+                        case "oneofFieldType":
+                            fieldStr[0] = field[1];
+                            break;
+                        case "oneofField":
+                            fieldStr[1] = field[1];
+                            break;
+                        case "oneofCaseField":
+                            fieldStr[2] = field[1];
+                            break;
+                        case "fieldNumber":
+                            fieldStr[3] = field[1];
+                            break;
+                        case "hasBitsIndx":
+                            fieldStr[4] = field[1];
+                    }
+                }
+
+
+            } else {
+                for(String fields : line.split(",")){
+                    String[] field = fields.split("=");
+                    if(field.length < 2){
+                        continue;
+                    }
+                    field[1] = field[1].trim();
+                    switch (field[0].replace(" ","")){
+                        case "fieldType":
+                            fieldStr[0] = field[1];
+                            break;
+                        case "field":
+                            fieldStr[1] = field[1];
+                            break;
+                        case "hasBitsField":
+                            fieldStr[2] = field[1];
+                            break;
+                        case "fieldNumber":
+                            fieldStr[3] = field[1];
+                            break;
+                        case "hasBitsIndx":
+                            fieldStr[4] = field[1];
+                    }
+                }
+            }
+
+            if(line.contains("oneofField")){
+                if(!oneofProtoStr.containsKey(fieldStr[1])){
+                    oneofProtoStr.put(fieldStr[1],new StringBuilder().append("oneof "+fieldStr[1]+" {\n"));
+                }
+
+                StringBuilder oneofStr = oneofProtoStr.get(fieldStr[1]);
+                Integer oneNum = oneofFieldNum.get(fieldStr[1]);
+                if(oneNum == null){
+                    oneofFieldNum.put(fieldStr[1],Integer.valueOf(0));
+                    oneNum = 0;
+                }
+                oneofStr.append("\t"+fieldStr[0].toLowerCase() +" oneofField"+ oneNum +" = "+fieldStr[3]+";\n");
+                oneofFieldNum.replace(fieldStr[1],oneofFieldNum.get(fieldStr[1])+1);
+
+
+            } else {
+                if(fieldStr[2]!="" && fieldStr[2]!=null){
+                    protostr.append("optional ");
+                }else if(fieldStr[0]!=null && fieldStr[0].contains("LIST")){
+                    protostr.append("repeated ");
+                    fieldStr[0] = fieldStr[0].replace("_LIST","");
+                }else{
+                    protostr.append("required ");
+                }
+                if(fieldStr[0]!=null && fieldStr[1]!=null && fieldStr[3]!=null){
+                    fieldStr[0] = fieldStr[0].replace("_packed","");
+                    if (fieldStr[0].contains("PACKED")) protostr.append(fieldStr[0].toLowerCase().replace("_packed","")+" "); else protostr.append(fieldStr[0].toLowerCase()+" ");
+
+                    protostr.append(fieldStr[1] + " = ");
+                    if(fieldStr[0].contains("PACKED")) protostr.append(fieldStr[3]+" [packed=true];"); else protostr.append(fieldStr[3]+";");
+
+
+
+                    linemap.put(Integer.valueOf(fieldStr[3]),protostr.toString());
+                }
+            }
+
+        }
+
+        for(StringBuilder oneof : oneofProtoStr.values()){
+            outproto.append(oneof.append("}\n"));
+        }
+
+//                int linenumber = 1;
+        for (Integer entry : linemap.keySet()) {
+            outproto.append(linemap.get(entry)+"\n");//+"  //0x"+Integer.toHexString(linenumber)+"\n");
+//                    linenumber*=2;
+        }
+
+        return outproto.toString();
     }
 
-    private static void showDialog() {
+    public void showDialog() {
         JFrame frame = new JFrame("MessageInfo还原工具");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 300);
+        frame.setSize(800, 500);
+        frame.setLocationRelativeTo(null);
 
-        JTextField textField1 = new JTextField();
-        JTextField textField2 = new JTextField();
-        JTextArea outputArea = new JTextArea();
+        final JTextField textField1 = new JTextField();
+//        JTextArea textField2 = new JTextArea();
+        final JTextArea outputArea = new JTextArea();
         outputArea.setEditable(false);
 
         JButton button = new JButton("解析");
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String strInfo = textField1.getText().replace("\"","").replace(" ","");
-                strInfo = StringEscapeUtils.unescapeJava(strInfo);
+        //            private Map<String,String> getFieldType(String typeString){
+//                Map<String,String> result = new HashMap<>();
+//                if(typeString.isEmpty()) return result;
+//                for (String field : typeString.split("\n")){
+//                    String[] fieldtype = field.trim().replace(";","").split(" ");
+//                    result.put(fieldtype[2],fieldtype[1]);
+//                }
+//                return result;
+//            }
+        button.addActionListener(e -> {
+            String originstr = textField1.getText().replace(");","").replace("new Object[]","");
+            String strInfo = originstr.substring(0,originstr.indexOf(","));
+            String objstr = originstr.substring(originstr.indexOf(",")+1);
 
-                String objstr = textField2.getText();
-                objstr = objstr.replace("\"","");
-                if(objstr.contains("{")){
-                    objstr = objstr.substring(1,objstr.length());
-                }
-                if (objstr.contains("}")){
-                    objstr = objstr.substring(0,objstr.length()-1);
-                }
-                String[] objects = objstr.split(",");
-                String parseStr = dumpProtoBuffNew(strInfo, objects);
+            strInfo = strInfo.replace("\"","").replace(" ","");
+//                strInfo = StringEscapeUtils.unescapeJava(strInfo);
 
-                String protoStr;
-                try{
-                    protoStr = ToProto(UpdateType(parseStr,objects),objstr);
-                }catch (Exception ec){
-                    protoStr = "发生内部错误";
-                }
-                outputArea.setText(parseStr+"\n\n"+protoStr);
+            objstr = objstr.replace("\"","").replace("{","").replace("}","");
+            String[] objects = objstr.split(",");
+            String parseStr = dumpProtoBuffNew(strInfo, objects);
+
+            String protoStr;
+            try{
+                protoStr = ToProto(UpdateType(parseStr,objects),objstr);
+            }catch (Exception ec){
+                protoStr = "发生内部错误";
             }
-
-            private String ToProto(String parseStr,String objstr) {
-                String[] s = parseStr.split("\n");
-                String[] fieldStr = new String[4];
-                StringBuilder protostr = new StringBuilder();
-                Map<String,StringBuilder> oneofProtoStr = new HashMap<>();
-                StringBuilder outproto = new StringBuilder();
-                Map<String,String> linemap = new HashMap<>();
-                Map<String,Integer> oneofFieldNum = new HashMap<>();
-
-                for(String line : s){
-                    protostr.setLength(0);
-                    if(line.contains("oneOfField")) line = line.replace("{oneOfField",""); else line = line.replace("{Field","");
-                    line = line.replace("}","");
-                    for (int i = 0; i < fieldStr.length; i++) fieldStr[i] = null;
-
-                    if(line.contains("oneofField")) {
-                        for(String fields : line.split(",")){
-                            String[] field = fields.split("=");
-                            if(field.length < 2){
-                                continue;
-                            }
-                            switch (field[0].replace(" ","")){
-                                case "oneofFieldType":
-                                    fieldStr[0] = field[1];
-                                    break;
-                                case "oneofField":
-                                    fieldStr[1] = field[1];
-                                    break;
-                                case "oneofCaseField":
-                                    fieldStr[2] = field[1];
-                                    break;
-                                case "fieldNumber":
-                                    fieldStr[3] = field[1];
-                                    break;
-                            }
-                        }
-
-
-                    } else {
-                        for(String fields : line.split(",")){
-                            String[] field = fields.split("=");
-                            if(field.length < 2){
-                                continue;
-                            }
-                            switch (field[0].replace(" ","")){
-                                case "fieldType":
-                                    fieldStr[0] = field[1];
-                                    break;
-                                case "field":
-                                    fieldStr[1] = field[1];
-                                    break;
-                                case "hasBitsField":
-                                    fieldStr[2] = field[1];
-                                    break;
-                                case "fieldNumber":
-                                    fieldStr[3] = field[1];
-                                    break;
-                            }
-                        }
-                    }
-
-                    if(line.contains("oneofField")){
-                        if(!oneofProtoStr.containsKey(fieldStr[1])){
-                            oneofProtoStr.put(fieldStr[1],new StringBuilder().append("oneof "+fieldStr[1]+" {\n"));
-                        }
-
-                        StringBuilder oneofStr = oneofProtoStr.get(fieldStr[1]);
-                        Integer oneNum = oneofFieldNum.get(fieldStr[1]);
-                        if(oneNum == null){
-                            oneofFieldNum.put(fieldStr[1],Integer.valueOf(0));
-                            oneNum = 0;
-                        }
-                        oneofStr.append("\t"+fieldStr[0].toLowerCase() +" oneofField"+ oneNum +" = "+fieldStr[3]+";\n");
-                        oneofFieldNum.replace(fieldStr[1],oneofFieldNum.get(fieldStr[1])+1);
-
-
-                    } else {
-                        if(fieldStr[2]!="" && fieldStr[2]!=null){
-                            protostr.append("optional ");
-                        }else if(fieldStr[0]!=null && fieldStr[0].contains("LIST")){
-                            protostr.append("repeated ");
-                            fieldStr[0] = fieldStr[0].replace("_LIST","");
-                        }else{
-                            protostr.append("required ");
-                        }
-                        if(fieldStr[0]!=null && fieldStr[1]!=null && fieldStr[3]!=null){
-                            if (fieldStr[0].contains("PACKED")) protostr.append(fieldStr[0].toLowerCase().replace("_packed","")+" "); else protostr.append(fieldStr[0].toLowerCase()+" ");
-
-
-                            protostr.append(fieldStr[1]+" =");
-                            if(fieldStr[0].contains("PACKED")) protostr.append(fieldStr[3]+" [packed=true];"); else protostr.append(fieldStr[3]+";");
-
-
-
-                            linemap.put(fieldStr[1],protostr.toString());
-                        }
-                    }
-
-                }
-
-                for(StringBuilder oneof : oneofProtoStr.values()){
-                    outproto.append(oneof.append("}\n"));
-                }
-
-//                int linenumber = 1;
-                for (Map.Entry<String, String> entry : linemap.entrySet()) {
-                    outproto.append(entry.getValue()+"\n");//+"  //0x"+Integer.toHexString(linenumber)+"\n");
-//                    linenumber*=2;
-                }
-
-                return outproto.toString();
-            }
+            outputArea.setText(parseStr+"\n\n"+protoStr);
         });
 
-        JPanel inputPanel = new JPanel(new GridLayout(1, 3, 5, 5));
-        inputPanel.add(textField1);
-        inputPanel.add(textField2);
-        inputPanel.add(button);
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        // 通用设置
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(1,1,0,0);  // 设置组件之间的间距
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx=1;
+        inputPanel.add(textField1,gbc);
+//        textField2.setRows(5);  // 设置行数
+//        JScrollPane scrollPane1 = new JScrollPane(textField2);
+//        gbc.gridy = 1;
+//        gbc.weighty = 1;
+//        gbc.fill = GridBagConstraints.BOTH;
+//        scrollPane1.setPreferredSize(new Dimension(200, 100));  //
+//        inputPanel.add(scrollPane1,gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+//        gbc.gridheight = 2;  // 指定按钮跨两行
+//        gbc.fill = GridBagConstraints.VERTICAL;
+        inputPanel.add(button,gbc);
 
         frame.setLayout(new BorderLayout(10, 10));
         frame.add(inputPanel, BorderLayout.NORTH);
@@ -1018,7 +920,7 @@ class PBDecoder {
         frame.setVisible(true);
     }
 
-    private static String UpdateType(String parseStr, String[] objects) {
+    public static String UpdateType(String parseStr, String[] objects) {
         for (int i = 0; i < objects.length; i++) {
             objects[i] = objects[i].replace(" ","");
         }

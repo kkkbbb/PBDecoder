@@ -1,4 +1,4 @@
-package billing;
+package com.wwb.proto;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
