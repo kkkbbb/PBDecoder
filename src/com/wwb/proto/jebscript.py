@@ -60,7 +60,7 @@ class test(IScript):
     return cresultstr+"}\n\n"+subresult
   
   def isBaseType(self,mtype):
-    for basetype in ["enum","string","int","int","bool","fixed","bytes","oneof","map"]:
+    for basetype in ["enum","string","int","float","bool","fixed","bytes","oneof","map"]:
       if basetype in mtype:
         return True
     return False
