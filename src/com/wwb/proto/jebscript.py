@@ -46,7 +46,9 @@ class test(IScript):
             if mtype.getName() in parsedClass: continue
             subresult += self.parseCls(mtype.getImplementingClass())
         continue
-            
+
+      if mfieldType == "enum":
+        fields = fields.replace("enum","int32") + " //unknow enum"
       cresultstr +="\t"+fields+"\n"
       
       if not self.isBaseType(mfieldType):
