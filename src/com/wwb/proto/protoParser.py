@@ -1,10 +1,10 @@
+import sys
+from com.pnfsoftware.jeb.client.api import FormEntry
 from com.pnfsoftware.jeb.client.api import IScript
-from com.pnfsoftware.jeb.core.units.code import ICodeUnit
 from com.pnfsoftware.jeb.core.units.code.android import IDexUnit
 from com.pnfsoftware.jeb.core.units.code.android.dex import IDexCodeItem
-from com.pnfsoftware.jeb.client.api import FormEntry
 from java.lang import System
-import sys
+
 sys.path.append(r"D:\tools\PBDecoder.jar")
 System.setProperty("python.security.respectJavaAccessibility", "false")
 from com.wwb.proto import PBMain
@@ -12,7 +12,7 @@ from com.wwb.proto import PBMain
 dexUnit = None
 parsedClass = []
     
-class test(IScript):
+class protoParser(IScript):
   def run(self, ctx):
     global dexUnit,parsedClass
     prj = ctx.getMainProject()
