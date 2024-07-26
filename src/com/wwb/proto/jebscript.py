@@ -38,6 +38,7 @@ class test(IScript):
         continue
       field = fields.split("=")[0].split(" ")
       mfieldType =field[1] if not "oneof" in field[1] else field[0]
+      mfieldType = mfieldType.strip()
       if mfieldType == "message" or mfieldType == "group":
         for clsField in cls.getFields():
           if clsField.getName() == field[2]:
