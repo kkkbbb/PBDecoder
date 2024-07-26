@@ -477,11 +477,6 @@ class PBDecoder {
     }
 
     public String dumpProtoBuffNew(String info, String[] argObjects) {
-        System.out.println(info);
-        for(String item : argObjects){
-            System.out.print(item+",");
-        }
-        System.out.print("\n");
         info = StringEscapeUtils.unescapeJava(info);
         final int length = info.length();
 //        int i = 0;
@@ -730,9 +725,7 @@ class PBDecoder {
         Map<String,StringBuilder> oneofProtoStr = new HashMap<>();
         StringBuilder outproto = new StringBuilder();
         TreeMap<Integer,String> linemap = new TreeMap<>();
-        Map<String,Integer> oneofFieldNum = new HashMap<>();
 
-//                int nohasbitNum = 99;
         for(String line : s){
             protostr.setLength(0);
             if(line.contains("oneOfField")) line = line.replace("{oneOfField",""); else line = line.replace("{Field","");
@@ -797,13 +790,7 @@ class PBDecoder {
                 }
 
                 StringBuilder oneofStr = oneofProtoStr.get(fieldStr[1]);
-                Integer oneNum = oneofFieldNum.get(fieldStr[1]);
-                if(oneNum == null){
-                    oneofFieldNum.put(fieldStr[1],Integer.valueOf(0));
-                    oneNum = 0;
-                }
-                oneofStr.append("\t"+fieldStr[0].toLowerCase() +" oneofField"+ oneNum +" = "+fieldStr[3]+";\n");
-                oneofFieldNum.replace(fieldStr[1],oneofFieldNum.get(fieldStr[1])+1);
+                oneofStr.append("\t"+fieldStr[0].toLowerCase() +" oneofField"+ fieldStr[3] +" = "+fieldStr[3]+";\n");
 
 
             } else {
