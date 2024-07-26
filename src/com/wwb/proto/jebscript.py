@@ -90,7 +90,7 @@ class test(IScript):
             if len(conststr) > 2 or "\x01" in conststr or "\x02" in conststr:
               messageinfo = conststr
             else:
-              objs+=(conststr if not conststr.lower() in objs.split(",") else conststr+"_") +","
+              objs+=(conststr if not conststr.lower() in objs.lower().split(",") else conststr+"_") +","
             continue
           if ins.getMnemonic() == "const-class":
             objs+= dexUnit.getType(ins.getParameters()[1].getValue()).getName()+","
