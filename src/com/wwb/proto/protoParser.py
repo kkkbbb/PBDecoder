@@ -28,7 +28,6 @@ class protoParser(IScript):
     parsedClass.append(cls.getName())
     currentproto = self.parseProto(cls)
     
-    
     cresultstr = "message " + cls.getName() + " {\n"
     subresult = ""
     for fields in currentproto.split("\n"):
@@ -50,6 +49,8 @@ class protoParser(IScript):
       
       if mfieldType == "enum":
         fields = fields.replace("enum","int32") + " //unknow enum"
+      if "/" in mfieldType:
+        fields = fields.replace(mfieldType,mfieldType.split("/")[1])
       cresultstr +="\t"+fields+"\n"
       
       if not self.isBaseType(mfieldType):
