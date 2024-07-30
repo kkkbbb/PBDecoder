@@ -54,6 +54,8 @@ class protoParser(IScript):
       cresultstr +="\t"+fields+"\n"
       
       if not self.isBaseType(mfieldType):
+        if "/" in mfieldType:
+          if mfieldType.split("/")[1] in parsedClass: continue
         if mfieldType in parsedClass: continue
         subresult += self.parseCls(dexUnit.getClass("L"+mfieldType+";"))
         
