@@ -608,7 +608,7 @@ class PBDecoder {
                 } else if (fieldType == 27 /* FieldType.MESSAGE_LIST */
                         || fieldType == 49 /* FieldType.GROUP_LIST */) {
                     objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
-                    fieldMsgType = (String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1];
+                    fieldMsgType = ((String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1])+"_LIST";
                 } else if (fieldType == 12 /* FieldType.ENUM */
                         || fieldType == 30 /* FieldType.ENUM_LIST */
                         || fieldType == 44 /* FieldType.ENUM_LIST_PACKED */) {
