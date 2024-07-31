@@ -555,9 +555,11 @@ class PBDecoder {
                 int oneofIndex = msgs.getNext();
 
                 final int oneofFieldType = fieldType - ONEOF_TYPE_OFFSET;
+                String oneofMsgType = "";
                 if (oneofFieldType == 9 /* FieldType.MESSAGE */
                         || oneofFieldType == 17 /* FieldType.GROUP */) {
                     objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
+                    oneofMsgType = (String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1];
                 } else if (oneofFieldType == 12 /* FieldType.ENUM */) {
                     if (!isProto3) {
                         objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
@@ -592,17 +594,21 @@ class PBDecoder {
                     oneofCaseField = (String) o;
                     messageInfoObjects[index] = oneofCaseField;
                 }
-                dumpstr.append("\n{oneOfField oneofFieldType=" + pbTypeToString(oneofFieldType) + ", oneofField="
-                        + oneofField + ", oneofCaseField= " + oneofCaseField + ", fieldNumber=" + fieldNumber + "}");
+                dumpstr.append("\n{oneOfField oneofFieldType=").append(oneofMsgType.isEmpty() ? pbTypeToString(oneofFieldType) : oneofMsgType.replace(".class",""))
+                        .append(", oneofField=").append(oneofField)
+                        .append(", oneofCaseField= ").append(oneofCaseField)
+                        .append(", fieldNumber=").append(fieldNumber).append("}");
                 presenceFieldOffset = (int) 0;
                 presenceMaskShift = 0;
             } else {
                 String field = objectsPosition<messageInfoObjects.length? (String) messageInfoObjects[objectsPosition++] : "Unknow";
+                String fieldMsgType = "";
                 if (fieldType == 9 /* FieldType.MESSAGE */ || fieldType == 17 /* FieldType.GROUP */) {
                     objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = field;
                 } else if (fieldType == 27 /* FieldType.MESSAGE_LIST */
                         || fieldType == 49 /* FieldType.GROUP_LIST */) {
                     objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
+                    fieldMsgType = (String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1];
                 } else if (fieldType == 12 /* FieldType.ENUM */
                         || fieldType == 30 /* FieldType.ENUM_LIST */
                         || fieldType == 44 /* FieldType.ENUM_LIST_PACKED */) {
@@ -641,9 +647,11 @@ class PBDecoder {
                     presenceMaskShift = 0;
                 }
 
-                dumpstr.append("\n"+
-                        "{Field fieldType=" + pbTypeToString(fieldType) + ", field=" + field + ", hasBitsField="
-                                + hasBitsField + ", fieldNumber= " + fieldNumber + ", hasBitsIndx=" + (hasHasBit?1 << hasBitsIndex:hasBitsIndex) + "}");
+                dumpstr.append("\n" + "{Field fieldType=").append(fieldMsgType.isEmpty()? pbTypeToString(fieldType) : fieldMsgType.replace(".class",""))
+                        .append(", field=").append(field)
+                        .append(", hasBitsField=").append(hasBitsField)
+                        .append(", fieldNumber= ").append(fieldNumber)
+                        .append(", hasBitsIndx=").append(hasHasBit ? 1 << hasBitsIndex : hasBitsIndex).append("}");
                 if (fieldType >= 18 && fieldType <= 49) {
                     // Field types of repeated fields are in a consecutive range from 18
                     // (DOUBLE_LIST) to
@@ -865,7 +873,7 @@ class PBDecoder {
 
             String protoStr;
             try{
-                protoStr = ToProto(UpdateType(parseStr,objects),objstr);
+                protoStr = ToProto(parseStr,objstr);
             }catch (Exception ec){
                 protoStr = "发生内部错误";
             }

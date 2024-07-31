@@ -24,7 +24,7 @@ public class PBMain{
 
         String protoStr;
         try{
-            protoStr = pbDecoder.ToProto(pbDecoder.UpdateType(parseStr,objects),objstr);
+            protoStr = PBDecoder.ToProto(parseStr,objstr);
         }catch (Exception ec){
             protoStr = "发生内部错误";
         }
