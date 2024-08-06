@@ -612,7 +612,7 @@ class PBDecoder {
                 } else if (fieldType == 12 /* FieldType.ENUM */
                         || fieldType == 30 /* FieldType.ENUM_LIST */
                         || fieldType == 44 /* FieldType.ENUM_LIST_PACKED */) {
-                    if(messageInfoObjects[objectsPosition].contains(".")){
+                    if(!isProto3 && messageInfoObjects[objectsPosition].contains(".")){
                             objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
                     }
                 } else if (fieldType == 50 /* FieldType.MAP */) {
