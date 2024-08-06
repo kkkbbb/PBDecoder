@@ -463,7 +463,7 @@ class PBDecoder {
                 int c1 = result;
                 int c2;
                 int c3;
-                if ((c2 = info.charAt(currentPos++)) >= 0xE000 && (c3 = info.charAt(currentPos++)) < 0xd7ff) {
+                if ((c2 = info.charAt(currentPos++)) >= 0xE000 && (c3 = info.charAt(currentPos++)) <= 0xd7ff) {
                     return (c3 << 26) | ((c2 & 0x1FFF) << 13) | (c1 & 0x1FFF);
                 }
                 result = (c2 << 13) | (c1 & 0x1FFF);
@@ -483,7 +483,7 @@ class PBDecoder {
 
         messageInfo msgs = new messageInfo(info);
         final int flags = msgs.getNext();
-        final boolean isProto3 = (flags & 1) == 0;
+        final boolean isProto3 = ((flags & 1) == 0) && ((flags & 4) == 0);
         StringBuilder dumpstr = new StringBuilder();
 
         dumpstr.append("\nisProto3: " + isProto3);
