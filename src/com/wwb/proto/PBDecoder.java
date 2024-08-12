@@ -796,7 +796,7 @@ class PBDecoder {
                 }
 
                 StringBuilder oneofStr = oneofProtoStr.get(fieldStr[1]);
-                oneofStr.append("\t"+fieldStr[0].toLowerCase() +" oneofField"+ fieldStr[3] +" = "+fieldStr[3]+";\n");
+                oneofStr.append("\t"+fieldStr[0] +" oneofField"+ fieldStr[3] +" = "+fieldStr[3]+";\n");
 
 
             } else {
@@ -809,9 +809,12 @@ class PBDecoder {
                     protostr.append("required ");
                 }
                 if(fieldStr[0]!=null && fieldStr[1]!=null && fieldStr[3]!=null){
-                    fieldStr[0] = fieldStr[0].replace("_packed","");
-                    if (fieldStr[0].contains("PACKED")) protostr.append(fieldStr[0].toLowerCase().replace("_packed","")+" "); else protostr.append(fieldStr[0].toLowerCase()+" ");
-
+                    String typeStr = fieldStr[0].replace("_PACKED","");
+                    String finalTypeStr = typeStr;
+                    if (Arrays.stream(FieldType.values()).anyMatch(e -> e.name().equals(finalTypeStr))){
+                        typeStr = typeStr.toLowerCase();
+                    }
+                    protostr.append(typeStr+" ");
                     protostr.append(fieldStr[1] + " = ");
                     if(fieldStr[0].contains("PACKED")) protostr.append(fieldStr[3]+" [packed=true];"); else protostr.append(fieldStr[3]+";");
 
