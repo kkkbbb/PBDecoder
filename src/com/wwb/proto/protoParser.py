@@ -40,7 +40,7 @@ class protoParser(IScript):
       mfieldType = mfieldType.strip()
       if mfieldType == "message" or mfieldType == "group":
         for clsField in cls.getFields():
-          if clsField.getName() == field[2]:
+          if clsField.getName(True) == field[2] or clsField.getName(False) == field[2]:
             mtype = clsField.getFieldType()
             cresultstr += "\t" + fields.replace(mfieldType,mtype.getName()) + "\n"
             if mtype.getName() in parsedClass: continue
