@@ -11,23 +11,23 @@ from com.wwb.proto import PBMain
 
 dexUnit = None
 parsedClass = []
-
+    
 class protoParser(IScript):
   def run(self, ctx):
     global dexUnit,parsedClass
     prj = ctx.getMainProject()
     dexUnit = prj.findUnit(IDexUnit)
     parsedClass = []
-
+    
     className = ctx.displayForm("proto class","the class of protobuf",
-                                FormEntry.Text('className', '', FormEntry.INLINE, None, 0, 0))[0]
+    FormEntry.Text('className', '', FormEntry.INLINE, None, 0, 0))[0]
     protoresult = self.parseCls(dexUnit.getClass("L"+className+";"))
     ctx.displayText("proto", protoresult,True)
-
+    
   def parseCls(self,cls):
     parsedClass.append(cls.getName())
     currentproto = self.parseProto(cls)
-
+    
     cresultstr = "message " + cls.getName() + " {\n"
     subresult = ""
     for fields in currentproto.split("\n"):
@@ -40,39 +40,39 @@ class protoParser(IScript):
       mfieldType = mfieldType.strip()
       if mfieldType == "message" or mfieldType == "group":
         for clsField in cls.getFields():
-          if clsField.getName() == field[2]:
+          if clsField.getName(True) == field[2] or clsField.getName(False) == field[2]:
             mtype = clsField.getFieldType()
             cresultstr += "\t" + fields.replace(mfieldType,mtype.getName()) + "\n"
             if mtype.getName() in parsedClass: continue
             subresult += self.parseCls(mtype.getImplementingClass())
         continue
-
+      
       if mfieldType == "enum":
         fields = fields.replace("enum","int32") + " //unknow enum"
       if "/" in mfieldType:
         fields = fields.replace(mfieldType,mfieldType.split("/")[1])
       cresultstr +="\t"+fields+"\n"
-
+      
       if not self.isBaseType(mfieldType):
         if "/" in mfieldType:
           if mfieldType.split("/")[1] in parsedClass: continue
         if mfieldType in parsedClass: continue
         subresult += self.parseCls(dexUnit.getClass("L"+mfieldType+";"))
-
+    
     return cresultstr+"}\n\n"+subresult
-
+  
   def isBaseType(self,mtype):
     for basetype in ["enum","string","int","double","float","bool","fixed","bytes","oneof","map","group"]:
       if basetype in mtype:
         return True
     return False
-
+    
 
   def parseProto(self,cls):
     for method in cls.getMethods():
       if method.getName() == "<init>" or method.getName() == "<clinit>": continue
       codeItem = method.getData().getCodeItem()
-
+      
       objs = {}
       messageinfo = ""
       objkeys = []
@@ -91,7 +91,7 @@ class protoParser(IScript):
               continue
           if ins.getMnemonic() == "const-string":
             break
-
+        
         if firststr == len(instructions)-1: continue  #inccorect method!
         objcomplete = False
         while True:
@@ -130,20 +130,26 @@ class protoParser(IScript):
             # print objs
             aputobjs[key] =  objs[ins.getOperand(0).getValue()]
             # objs.clear()
-          if "invoke" in ins.getMnemonic() or firststr >= len(instructions)-1:
+            continue
+          # if ("invoke" in ins.getMnemonic() and len(messageinfo)>=2):
+          #   break
+          if "move-result" in ins.getMnemonic():
+            objs[ins.getOperand(0).getValue()] = "enum.type"
+            continue
+          if firststr >= len(instructions)-1:
             break
-        #print messageinfo
+        # print messageinfo
         if len(messageinfo) < 2: continue
         else: break
-
+            
     # print cls,method
     if len(messageinfo) < 2: raise Exception("Unexcept messageinfo!")
     if len(objs) < 1: return ""
-    if aputobjs:
+    if aputobjs: 
       objs = aputobjs
       objkeys = sorted(aputobjs.keys())
     # print self.to_unicode_escape(messageinfo),"\n",''.join(objs[key]+"," for key in objkeys)
     return PBMain.forJeb(self.to_unicode_escape(messageinfo),''.join(objs[key]+"," for key in objkeys))
-
+      
   def to_unicode_escape(self,s):
     return ''.join('\\u%04X' % ord(c) if ord(c) <= 0xFFFF else '\\u%08X' % ord(c) for c in s)
