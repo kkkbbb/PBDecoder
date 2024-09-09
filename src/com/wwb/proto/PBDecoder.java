@@ -612,7 +612,7 @@ class PBDecoder {
                 } else if (fieldType == 12 /* FieldType.ENUM */
                         || fieldType == 30 /* FieldType.ENUM_LIST */
                         || fieldType == 44 /* FieldType.ENUM_LIST_PACKED */) {
-                    if(!isProto3 && messageInfoObjects[objectsPosition].contains(".")){
+                    if(!isProto3 && objectsPosition < messageInfoObjects.length &&  messageInfoObjects[objectsPosition].contains(".")){
                             objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
                     }
                 } else if (fieldType == 50 /* FieldType.MAP */) {
@@ -796,7 +796,11 @@ class PBDecoder {
                 }
 
                 StringBuilder oneofStr = oneofProtoStr.get(fieldStr[1]);
-                oneofStr.append("\t"+fieldStr[0] +" oneofField"+ fieldStr[3] +" = "+fieldStr[3]+";\n");
+                String finalTypeStr = fieldStr[0];
+                if (Arrays.stream(FieldType.values()).anyMatch(e -> e.name().equals(fieldStr[0]))){
+                    finalTypeStr = finalTypeStr.toLowerCase();
+                }
+                oneofStr.append("\t"+finalTypeStr +" oneofField"+ fieldStr[3] +" = "+fieldStr[3]+";\n");
 
 
             } else {
