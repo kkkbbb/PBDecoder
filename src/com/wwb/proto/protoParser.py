@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from com.pnfsoftware.jeb.client.api import IScript
 from com.pnfsoftware.jeb.core.units.code import ICodeUnit
 from com.pnfsoftware.jeb.core.units.code.android import IDexUnit
@@ -5,7 +7,18 @@ from com.pnfsoftware.jeb.core.units.code.android.dex import IDexCodeItem
 from com.pnfsoftware.jeb.client.api import FormEntry
 from java.lang import System
 import sys
-sys.path.append(r"D:\tools\PBDecoder.jar")
+import os
+
+# 获取当前脚本所在的目录
+current_dir = os.path.dirname(os.path.abspath(__file__))
+jar_path = os.path.join(current_dir, "PBDecoder.jar")
+
+# 检查当前目录是否存在 PBDecoder.jar
+if os.path.exists(jar_path):
+  sys.path.append(jar_path)
+else:
+  sys.path.append(r"D:\tools\PBDecoder.jar")
+
 System.setProperty("python.security.respectJavaAccessibility", "false")
 from com.wwb.proto import PBMain
 
