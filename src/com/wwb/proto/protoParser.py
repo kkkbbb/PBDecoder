@@ -9,11 +9,9 @@ from java.lang import System
 import sys
 import os
 
-# 获取当前脚本所在的目录
 current_dir = os.path.dirname(os.path.abspath(__file__))
 jar_path = os.path.join(current_dir, "PBDecoder.jar")
 
-# 检查当前目录是否存在 PBDecoder.jar
 if os.path.exists(jar_path):
   sys.path.append(jar_path)
 else:
@@ -94,16 +92,21 @@ class protoParser(IScript):
       constRegsComplete = False
       if isinstance(codeItem, IDexCodeItem):
         instructions = codeItem.getInstructions()
-        for firststr,ins in enumerate(instructions):
+        for ins in instructions:
           if ins.getMnemonic() == "const/4":
-            if not constRegsComplete: constRegs[ins.getOperand(0).getValue()] = ins.getOperand(1).getValue()
+            if constRegsComplete == 0: constRegs[ins.getOperand(0).getValue()] = ins.getOperand(1).getValue()
             continue
           if "if-eq" == ins.getMnemonic():
             if constRegs[ins.getOperand(1).getValue()] == 2:
-              constRegsComplete = True
-              continue
-          if ins.getMnemonic() == "const-string":
-            break
+              constRegsComplete = (ins.getOperand(2).getValue())*2 + ins.getOffset()
+              break
+
+        if constRegsComplete > 0:
+          for firststr,ins in enumerate(instructions):
+            if ins.getOffset() == constRegsComplete:
+              break
+        else:
+          continue
         
         if firststr == len(instructions)-1: continue  #inccorect method!
         objcomplete = False
