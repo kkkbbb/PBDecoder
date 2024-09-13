@@ -100,6 +100,12 @@ class protoParser(IScript):
             if constRegs[ins.getOperand(1).getValue()] == 2:
               constRegsComplete = (ins.getOperand(2).getValue())*2 + ins.getOffset()
               break
+          if ins.isSwitch():
+            for item in ins.getSwitchData().getElements():
+              if item[0] == 2:
+                constRegsComplete = item[1]*2 + ins.getOffset()
+                break
+            break
 
         if constRegsComplete > 0:
           for firststr,ins in enumerate(instructions):
