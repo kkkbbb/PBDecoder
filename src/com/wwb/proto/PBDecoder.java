@@ -558,41 +558,49 @@ class PBDecoder {
                 String oneofMsgType = "";
                 if (oneofFieldType == 9 /* FieldType.MESSAGE */
                         || oneofFieldType == 17 /* FieldType.GROUP */) {
-                    objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
-                    oneofMsgType = (String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1];
+                    if (objectsPosition < messageInfoObjects.length) {
+                        objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
+                        oneofMsgType = (String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1];
+                    }
                 } else if (oneofFieldType == 12 /* FieldType.ENUM */) {
-                    if (!isProto3) {
+                    // 只有当对象以.class结尾且不会越界时才消耗objectsPosition
+                    if (!isProto3 && objectsPosition < messageInfoObjects.length && 
+                        messageInfoObjects[objectsPosition].contains(".class")) {
                         objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
                     }
                 }
 
                 String oneofField = "";
                 int index = oneofIndex * 2;
-                Object o = messageInfoObjects[index];
-                if (o instanceof java.lang.reflect.Field) {
-                    // oneofField = (java.lang.reflect.Field) o;
-                } else {
-                    oneofField = (String) o;
-                    // Memoize java.lang.reflect.Field instances for oneof/hasbits fields, since
-                    // they're
-                    // potentially used for many Protobuf fields. Since there's a 1-1 mapping from
-                    // the
-                    // Protobuf field to the Java Field for non-oneofs, there's no benefit for
-                    // memoizing
-                    // those.
-                    messageInfoObjects[index] = oneofField;
+                if (index < messageInfoObjects.length) {
+                    Object o = messageInfoObjects[index];
+                    if (o instanceof java.lang.reflect.Field) {
+                        // oneofField = (java.lang.reflect.Field) o;
+                    } else {
+                        oneofField = (String) o;
+                        // Memoize java.lang.reflect.Field instances for oneof/hasbits fields, since
+                        // they're
+                        // potentially used for many Protobuf fields. Since there's a 1-1 mapping from
+                        // the
+                        // Protobuf field to the Java Field for non-oneofs, there's no benefit for
+                        // memoizing
+                        // those.
+                        messageInfoObjects[index] = oneofField;
+                    }
                 }
 
                 fieldOffset = (int) 0;
 
                 String oneofCaseField = "";
                 index++;
-                o = messageInfoObjects[index];
-                if (o instanceof java.lang.reflect.Field) {
-                    // oneofCaseField = (java.lang.reflect.Field) o;
-                } else {
-                    oneofCaseField = (String) o;
-                    messageInfoObjects[index] = oneofCaseField;
+                if (index < messageInfoObjects.length) {
+                    Object o = messageInfoObjects[index];
+                    if (o instanceof java.lang.reflect.Field) {
+                        // oneofCaseField = (java.lang.reflect.Field) o;
+                    } else {
+                        oneofCaseField = (String) o;
+                        messageInfoObjects[index] = oneofCaseField;
+                    }
                 }
                 dumpstr.append("\n{oneOfField oneofFieldType=").append(oneofMsgType.isEmpty() ? pbTypeToString(oneofFieldType) : oneofMsgType.replace(".class",""))
                         .append(", oneofField=").append(oneofField)
@@ -601,14 +609,16 @@ class PBDecoder {
                 presenceFieldOffset = (int) 0;
                 presenceMaskShift = 0;
             } else {
-                String field = objectsPosition<messageInfoObjects.length? (String) messageInfoObjects[objectsPosition++] : "Unknow";
+                String field = objectsPosition<messageInfoObjects.length? messageInfoObjects[objectsPosition++] : "Unknown";
                 String fieldMsgType = "";
                 if (fieldType == 9 /* FieldType.MESSAGE */ || fieldType == 17 /* FieldType.GROUP */) {
                     objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = field;
                 } else if (fieldType == 27 /* FieldType.MESSAGE_LIST */
                         || fieldType == 49 /* FieldType.GROUP_LIST */) {
-                    objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
-                    fieldMsgType = ((String) objects[bufferIndex / INTS_PER_FIELD * 2 + 1])+"_LIST";
+                    if (objectsPosition < messageInfoObjects.length) {
+                        objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
+                        fieldMsgType = objects[bufferIndex / INTS_PER_FIELD * 2 + 1] +"_LIST";
+                    }
                 } else if (fieldType == 12 /* FieldType.ENUM */
                         || fieldType == 30 /* FieldType.ENUM_LIST */
                         || fieldType == 44 /* FieldType.ENUM_LIST_PACKED */) {
@@ -617,8 +627,10 @@ class PBDecoder {
                     }
                 } else if (fieldType == 50 /* FieldType.MAP */) {
                     intArray[mapFieldIndex++] = bufferIndex;
-                    objects[bufferIndex / INTS_PER_FIELD * 2] = messageInfoObjects[objectsPosition++];
-                    if ((fieldTypeWithExtraBits & 0x800) != 0) {
+                    if (objectsPosition < messageInfoObjects.length) {
+                        objects[bufferIndex / INTS_PER_FIELD * 2] = messageInfoObjects[objectsPosition++];
+                    }
+                    if ((fieldTypeWithExtraBits & 0x800) != 0 && objectsPosition < messageInfoObjects.length) {
                         objects[bufferIndex / INTS_PER_FIELD * 2 + 1] = messageInfoObjects[objectsPosition++];
                     }
                 }
@@ -630,12 +642,14 @@ class PBDecoder {
                 if(hasHasBit) { hasBitsIndex = msgs.getNext();}
                 if (hasHasBit && fieldType <= 17 /* FieldType.GROUP */) {
                     int index = oneofCount * 2 + hasBitsIndex / 32;
-                    Object o = messageInfoObjects[index];
-                    if (o instanceof java.lang.reflect.Field) {
-                        // hasBitsField = (java.lang.reflect.Field) o;
-                    } else {
-                        hasBitsField = (String) o;
-                        messageInfoObjects[index] = hasBitsField;
+                    if (index < messageInfoObjects.length) {
+                        Object o = messageInfoObjects[index];
+                        if (o instanceof java.lang.reflect.Field) {
+                            // hasBitsField = (java.lang.reflect.Field) o;
+                        } else {
+                            hasBitsField = (String) o;
+                            messageInfoObjects[index] = hasBitsField;
+                        }
                     }
 
                     presenceFieldOffset = (int) 0;
